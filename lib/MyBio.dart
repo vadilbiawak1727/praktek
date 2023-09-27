@@ -1,31 +1,35 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_spinbox/flutter_spinbox.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class myBio extends StatefulWidget {
-  const myBio({super.key});
+class MyBio extends StatefulWidget {
+  const MyBio({Key? key}) : super(key: key);
 
   @override
-
-  State<myBio> createState() => _myBioState();
+  State<MyBio> createState() => _MyBioState();
 }
 
-class _myBioState extends State<myBio> {
+class _MyBioState extends State<MyBio> {
   String? _image;
   double _score = 0;
-  final ImagePicker _Picker = ImagePicker();
-  final String _KeyScore = "Score";
-  final String _KeyImage = "image";
+  DateTime? _selectedDate;
+  final ImagePicker _picker = ImagePicker();
+  final String _keyScore = "Score";
+  final String _keyImage = "image";
+  final String _keyDate = "date";
   late SharedPreferences _preferences;
 
   void loadData() async {
     _preferences = await SharedPreferences.getInstance();
     setState(() {
-      _score = (_preferences.getDouble(_KeyScore) ?? 0);
-      _image = _preferences.getString(_KeyImage);
+      _score = (_preferences.getDouble(_keyScore) ?? 0);
+      _image = _preferences.getString(_keyImage);
+      final storedDate = _preferences.getString(_keyDate);
+      if (storedDate != null) {
+        _selectedDate = DateTime.parse(storedDate);
+      }
     });
   }
 
@@ -34,6 +38,46 @@ class _myBioState extends State<myBio> {
     super.initState();
     loadData();
   }
+
+  Future<void> _setScore(double value) async {
+    _preferences = await SharedPreferences.getInstance();
+    setState(() {
+      _preferences.setDouble(_keyScore, value);
+      _score = ((_preferences.getDouble(_keyScore) ?? 0));
+    });
+  }
+
+  Future<void> _setImage(String? value) async {
+    _preferences = await SharedPreferences.getInstance();
+    if (value != null) {
+      setState(() {
+        _preferences.setString(_keyImage, value);
+        _image = _preferences.getString(_keyImage);
+      });
+    }
+  }
+
+  Future<void> _setDate(DateTime selectedDate) async {
+    _preferences = await SharedPreferences.getInstance();
+    setState(() {
+      _preferences.setString(_keyDate, selectedDate.toIso8601String());
+      _selectedDate = selectedDate;
+    });
+  }
+
+  Future<void> _pickDate() async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (pickedDate != null && pickedDate != _selectedDate) {
+      _setDate(pickedDate);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("My BIO DATA")),
@@ -58,51 +102,40 @@ class _myBioState extends State<myBio> {
                       color: Color.fromARGB(255, 198, 198, 198)),
                     width: 200,
                     height: 200,
-                    child: Icon(Icons.camera_alt, color: Colors.blueGrey
-                    ),  
+                    child: Icon(Icons.camera_alt, color: Colors.blueGrey),
                   ),
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: ElevatedButton(
                   onPressed: () async {
-                    XFile? image = await _Picker.pickImage(source: ImageSource.gallery);
+                    XFile? image = await _picker.pickImage(source: ImageSource.gallery);
                     _setImage(image?.path);
                   }, 
                   child: Text("Take Image")),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: SpinBox(
+                  max: 10.0,
+                  min: 0.0,
+                  value: _score,
+                  decimals: 1,
+                  step: 0.1,
+                  decoration: InputDecoration(labelText: "Decimals"),
+                  onChanged: _setScore,
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: SpinBox(
-                    max: 10.0,
-                    min: 0.0,
-                    value: _score,
-                    decimals: 1,
-                    step: 0.1,
-                    decoration: InputDecoration(labelText: "Decimals"),
-                    onChanged: _setScore,
-                  ),
-                  ),
+              ),
+              ElevatedButton(
+                onPressed: _pickDate,
+                child: Text("Pick Date"),
+              ),
+              if (_selectedDate != null)
+                Text("Selected Date: ${_selectedDate!.toLocal()}"),
             ],
           ),
         ),
-        ),
+      ),
     );
-  }
-  Future<void> _setScore(double value) async {
-  _preferences = await SharedPreferences.getInstance();
-  setState(() {
-    _preferences.setDouble(_KeyScore, value);
-    _score = ((_preferences.getDouble(_KeyScore) ?? 0));
-  });
-  }
-
-  Future<void> _setImage(String? value) async {
-    _preferences =await SharedPreferences.getInstance();
-    if (value != null)
-    setState(() {
-      _preferences.setString(_KeyImage, value);
-      _image = _preferences.getString(_KeyImage);
-    });
   }
 }
