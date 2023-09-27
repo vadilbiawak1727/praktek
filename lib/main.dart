@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:m02/MyBio.dart';
-import 'package:m02/MyBio2.dart';
+import 'package:m02/MyBioProvider.dart';
+import 'package:m02/MyBioversi2.dart';
 import 'package:m02/biodata.dart';
 import 'package:provider/provider.dart';
 
@@ -9,7 +10,7 @@ void main() {
     ChangeNotifierProvider(
       create: (context) => BioData(),
       child: MaterialApp(
-        home: MyBio2(),
+        home: MyBio(),
       ),
     ),
   );
