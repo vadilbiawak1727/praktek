@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinbox/flutter_spinbox.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:file_picker/file_picker.dart';
 
 class MyBio extends StatefulWidget {
   const MyBio({Key? key}) : super(key: key);
@@ -77,6 +78,31 @@ class _MyBioState extends State<MyBio> {
     }
   }
 
+  void _showHistoryDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Riwayat Gambar"),
+          content: Column(
+            children: [
+              // Tambahkan daftar gambar di sini
+              // Misalnya, ListView.builder dengan daftar gambar
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+              },
+              child: Text("Tutup"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,28 +117,46 @@ class _MyBioState extends State<MyBio> {
                 height: 200,
                 decoration: BoxDecoration(color: Colors.red[200]),
                 child: _image != null
-                  ? Image.file(
-                      File(_image!),
-                      width: 200.0,
-                      height: 200.0,
-                      fit: BoxFit.fitHeight,
-                    )
-                  : Container(
-                    decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 198, 198, 198)),
-                    width: 200,
-                    height: 200,
-                    child: Icon(Icons.camera_alt, color: Colors.blueGrey),
-                  ),
+                    ? Image.file(
+                        File(_image!),
+                        width: 200.0,
+                        height: 200.0,
+                        fit: BoxFit.fitHeight,
+                      )
+                    : Container(
+                        decoration: BoxDecoration(
+                            color: Color.fromARGB(255, 198, 198, 198)),
+                        width: 200,
+                        height: 200,
+                        child: Icon(Icons.camera_alt, color: Colors.blueGrey),
+                      ),
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: ElevatedButton(
                   onPressed: () async {
-                    XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-                    _setImage(image?.path);
-                  }, 
-                  child: Text("Take Image")),
+                    FilePickerResult? result =
+                        await FilePicker.platform.pickFiles(
+                      type: FileType.image,
+                      allowMultiple: false,
+                    );
+
+                    if (result != null) {
+                      _setImage(result.files.single.path);
+                    }
+                  },
+                  child: Text("Ambil Foto"),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
+                    onPressed: () async {
+                      XFile? image =
+                          await _picker.pickImage(source: ImageSource.gallery);
+                      _setImage(image?.path);
+                    },
+                    child: Text("Take Image")),
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -135,6 +179,18 @@ class _MyBioState extends State<MyBio> {
             ],
           ),
         ),
+      ),
+      floatingActionButton: Stack(
+        children: [
+          Positioned(
+            bottom: 16.0,
+            right: 10.0,
+            child: ElevatedButton(
+              onPressed: _showHistoryDialog,
+              child: Text("History"),
+            ),
+          ),
+        ],
       ),
     );
   }
